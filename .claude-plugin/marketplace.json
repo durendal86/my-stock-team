@@ -1,0 +1,20 @@
+{
+  "name": "my-stock-team-marketplace",
+  "owner": {
+    "name": "stock_team"
+  },
+  "metadata": {
+    "description": "대형주 리서치 애널리스트 팀 플러그인 배포 카탈로그",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "my-stock-team",
+      "source": "./",
+      "description": "애널리스트 서브에이전트 5종(펀더멘털·시장기술·뉴스심리·리스크종합·검증) + 리포트 스킬(report-pptx, pdf-convert) + 실행 커맨드(/analyze, /build-report, /verify-report).",
+      "version": "1.0.0",
+      "category": "research",
+      "keywords": ["stock", "research", "korea", "equity", "report"]
+    }
+  ]
+}

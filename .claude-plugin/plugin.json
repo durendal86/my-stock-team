@@ -1,0 +1,10 @@
+{
+  "name": "my-stock-team",
+  "version": "1.0.0",
+  "description": "역할별 애널리스트 서브에이전트 5종과 리포트 생성 스킬을 묶은 대형주 리서치 팀. 종목명을 주면 펀더멘털·시장기술·뉴스심리 분석을 병렬로 돌리고, 리스크 매니저가 종합해 5부 PPTX/PDF 리포트를 만듭니다.",
+  "keywords": ["stock", "research", "korea", "equity", "report", "pptx", "analyst"],
+  "author": {
+    "name": "stock_team"
+  },
+  "license": "MIT"
+}
