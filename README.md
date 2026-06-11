@@ -1,63 +1,73 @@
 # my-stock-team
 
-역할별 애널리스트 서브에이전트와 리포트 생성 스킬을 묶은 **대형주 리서치 팀** Claude Code 플러그인입니다.
-종목명을 주면 여러 애널리스트가 협업해 분석하고, 디자인된 5부 PPTX/PDF 리포트를 만듭니다.
+**종목명만 던지면 애널리스트 팀이 재무·차트·뉴스·리스크를 나눠 분석하고, 디자인된 5부 PPTX/PDF 리포트까지 만들어 주는 Claude Code 플러그인입니다.**
 
-> 본 플러그인의 산출물은 **무료 공개 데이터 기반 학습용**입니다. 매수·매도 등 투자 판단의 근거로 사용할 수 없습니다.
+> 산출물은 **무료 공개 데이터 기반 학습용**이며, 매수·매도 등 투자 판단의 근거로 쓸 수 없습니다.
 
-## 구성
-
-```
-my-stock-team/
-├── .claude-plugin/
-│   ├── plugin.json         # 플러그인 매니페스트 (name, version 1.0.0)
-│   └── marketplace.json    # 설치 카탈로그
-├── agents/                 # 서브에이전트 5종
-│   ├── fundamental-analyst.md       # 재무·실적·공시 (DART)
-│   ├── market-tech-analyst.md       # 가격·추세·거래량 (FinanceDataReader)
-│   ├── news-sentiment-analyst.md    # 뉴스·이슈·심리 (WebSearch)
-│   ├── risk-manager-synthesizer.md  # 리스크·종합 (+ pykrx 시총·거래대금)
-│   └── verification-analyst.md      # 완성 리포트 품질 점검 (통과/보류)
-├── skills/
-│   ├── report-pptx/        # reports/{종목}.md → 디자인 PPTX
-│   └── pdf-convert/        # 오피스 문서 → PDF (LibreOffice 헤드리스)
-└── commands/
-    ├── analyze.md          # /analyze — 종합 분석 파이프라인
-    ├── build-report.md     # /build-report — PPTX(+PDF) 생성
-    └── verify-report.md    # /verify-report — 품질 점검
-```
+---
 
 ## 설치
 
-로컬 마켓플레이스로 추가한 뒤 설치합니다.
+Claude Code에서 두 줄이면 끝납니다.
 
 ```
-/plugin marketplace add /path/to/my-stock-team
-/plugin install my-stock-team@my-stock-team-marketplace
+/plugin marketplace add durendal86/my-stock-team
+/plugin install my-stock-team@my-stock-team
 ```
-
-(또는 이 폴더를 git 저장소로 올리고 `/plugin marketplace add <owner>/<repo>` 로 공유)
 
 ## 사용
 
+종목명을 자연어로 말하면 됩니다.
+
 ```
-/analyze 삼성전자            # 3인 병렬 분석 → 리스크 종합 → reports/삼성전자.md → 검증 → 리포트
-/verify-report 삼성전자      # 완성 리포트 품질 점검 (통과/보류)
+삼성전자 분석해줘
+```
+
+그러면 펀더멘털·시장기술·뉴스심리 애널리스트가 **동시에** 분석하고, 리스크 매니저가 종합한 뒤, 5부 구성(표지·재무·차트·뉴스심리·리스크·종합) 리포트를 만들어 줍니다.
+
+명령어로도 쓸 수 있습니다.
+
+```
+/analyze 삼성전자            # 종합 분석 → reports/삼성전자.md
+/verify-report 삼성전자      # 완성 리포트 품질 점검(통과/보류)
 /build-report 삼성전자 --pdf # 디자인 PPTX + PDF 생성
 ```
 
-개별 질문은 라우팅 규칙에 따라 담당 에이전트가 처리합니다(재무→펀더멘털, 가격→시장기술, 뉴스→뉴스심리).
+개별 질문은 알아서 담당 애널리스트에게 갑니다 — 재무 질문은 펀더멘털, 주가·추세는 시장기술, 뉴스·여론은 뉴스심리.
 
-## 필요 환경
+---
 
-- **Python 패키지**: `OpenDartReader`, `finance-datareader`, `pykrx`, `python-pptx`, `pandas`, `matplotlib`, `pyyaml`
-- **DART API 키**: 펀더멘털 애널리스트는 환경변수 `DART_KEY`를 읽습니다. **플러그인에는 키가 포함되어 있지 않습니다** — 각자 `.env` 또는 환경변수로 설정하세요. (DART OpenAPI에서 무료 발급)
-- **한글 폰트**: 리포트/차트는 **맑은 고딕(Malgun Gothic, Windows 기준)** 을 사용합니다. 다른 OS에서는 설치된 한글 폰트명에 맞게 `skills/report-pptx/build.py`의 `FONT` 값을 조정하세요.
-- **PDF 변환**: LibreOffice가 필요합니다(`winget install --id TheDocumentFoundation.LibreOffice -e --silent` 또는 OS별 설치). 없으면 PPTX까지만 생성됩니다.
+## ⚠️ 시작 전에: DART API 키는 각자 발급해 넣으세요
 
-## 가드레일 (전 산출물 공통)
+재무 분석은 **DART(전자공시) OpenAPI**를 씁니다. **키는 플러그인에 들어있지 않으며, 각자 본인 키를 발급해야 합니다.**
 
-- 모든 수치 옆 `(출처: 데이터명, 연도/날짜)` — 출처 없는 수치 금지
-- 못 구한 값은 "확인 불가", 출처 없는 뉴스·루머는 "미확인"
-- 매수·매도·보유·목표가·비중 조정 등 투자 행동 단정 금지 (의사결정 지원까지만, 최종 판단은 사람)
-- 리포트 첫머리 학습용 고지 + 끝에 데이터 출처·기준일 목록
+1. <https://opendart.fss.or.kr> 에서 무료로 인증키를 발급받습니다.
+2. 작업 폴더에 `.env` 파일을 만들고 키를 넣습니다.
+
+   ```
+   DART_KEY=발급받은_키
+   ```
+
+> 키는 절대 깃에 올리지 마세요. (이 저장소의 `.gitignore`가 `.env`를 기본 차단합니다.)
+
+## 그 외 필요 환경
+
+| 항목 | 용도 | 비고 |
+|---|---|---|
+| Python 패키지 | 데이터 수집·리포트 | `OpenDartReader` `finance-datareader` `pykrx` `python-pptx` `pandas` `matplotlib` `pyyaml` |
+| 한글 폰트 | 리포트·차트 글자 | 기본 **맑은 고딕(Windows)**. 다른 OS는 `skills/report-pptx/build.py`의 `FONT` 값을 설치된 한글 폰트로 변경 |
+| LibreOffice | PDF 변환 | 없으면 PPTX까지만 생성. `winget install --id TheDocumentFoundation.LibreOffice -e --silent` |
+
+---
+
+## 구성
+
+- **agents/** — 펀더멘털 · 시장기술 · 뉴스심리 · 리스크종합 · 검증, 5종 애널리스트
+- **skills/** — `report-pptx`(디자인 PPTX 생성), `pdf-convert`(PDF 변환)
+- **commands/** — `/analyze`, `/build-report`, `/verify-report`
+
+## 팀이 지키는 원칙
+
+- 모든 수치 옆에 `(출처: 데이터명, 연도/날짜)` — 출처 없는 수치는 쓰지 않습니다.
+- 못 구한 값은 "확인 불가", 출처 없는 뉴스·루머는 "미확인"으로 표기합니다.
+- 매수·매도·목표가 등 투자 행동은 **단정하지 않습니다.** 판단 근거 정리까지만, 최종 판단은 사람이 합니다.
